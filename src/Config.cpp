@@ -25,6 +25,8 @@ AppConfig LoadConfig(const std::string& filename){
                 config.loggingEnabled = (value == "true");
             else if (key == "logfile")
                 config.logFile = value;
+            else if (key == "enable_git")
+                config.enableGit = (value == "true");
         }
     }
 

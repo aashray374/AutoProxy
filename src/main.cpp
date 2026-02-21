@@ -3,10 +3,13 @@
 #include "../include/Monitor.h"
 #include "../include/Config.h"
 #include "../include/Logger.h"
+#include "../include/Env.h"
+#include "../include/GitProxy.h"
 
 #include <iostream>
 
 AppConfig config;
+EnvConfig env;
 
 void UpdateProxy()
 {
@@ -16,22 +19,27 @@ void UpdateProxy()
     {
         Log("No IP detected");
         SetProxy(false, config.proxy);
+
+        if (config.enableGit)
+            SetGitProxy(false, config.proxy,
+                        env.gitUser, env.gitPass);
+
         return;
     }
 
-    Log("Current IP: " + ip);
-
     bool inside = IsInSubnet(ip, config.subnet);
 
-    Log(std::string("Inside subnet: ")
-        + (inside ? "YES" : "NO"));
-
     SetProxy(inside, config.proxy);
+
+    if (config.enableGit)
+        SetGitProxy(inside, config.proxy,
+                    env.gitUser, env.gitPass);
 }
 
 int main()
 {
     config = LoadConfig("config.ini");
+    env = LoadEnv(".env");
 
     InitLogger(config.loggingEnabled,
                config.logFile);
