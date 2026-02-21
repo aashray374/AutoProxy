@@ -1,5 +1,6 @@
 #include "../include/ProxyManager.h"
 #include "../include/Logger.h"
+#include "../include/Tray.h"
 #include <windows.h>
 #include <wininet.h>
 #include <iostream>
@@ -11,8 +12,7 @@ void SetProxy(bool enable,const std::string& proxyServer){
 
     if (RegOpenKeyExA(HKEY_CURRENT_USER,
         "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-        0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS)
-    {
+        0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS){
         std::cout << "Registry open failed\n";
         return;
     }
@@ -23,8 +23,7 @@ void SetProxy(bool enable,const std::string& proxyServer){
         0, REG_DWORD,
         (BYTE*)&value, sizeof(value));
 
-    if (enable)
-    {
+    if (enable){
         RegSetValueExA(hKey, "ProxyServer",
             0, REG_SZ,
             (BYTE*)proxyServer.c_str(),
@@ -40,6 +39,7 @@ void SetProxy(bool enable,const std::string& proxyServer){
 
     Log(enable ? "Proxy Enabled"
            : "Proxy Disabled");
+    
 
     std::cout << (enable ? "Proxy ENABLED\n"
                          : "Proxy DISABLED\n");
