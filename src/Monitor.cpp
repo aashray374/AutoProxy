@@ -5,7 +5,8 @@
 
 #pragma comment(lib, "iphlpapi.lib")
 
-void MonitorNetwork(void (*callback)()){
+void MonitorNetwork(void (*callback)())
+{
     HANDLE handle;
     OVERLAPPED overlapped = {};
 

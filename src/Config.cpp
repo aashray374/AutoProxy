@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-AppConfig LoadConfig(const std::string& filename)
+AppConfig LoadConfig(const std::string &filename)
 {
     AppConfig config;
     std::ifstream file(filename);

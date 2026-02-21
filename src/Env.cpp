@@ -2,13 +2,14 @@
 #include <fstream>
 #include <sstream>
 
-EnvConfig LoadEnv(const std::string& filename)
+EnvConfig LoadEnv(const std::string &filename)
 {
     EnvConfig env;
     std::ifstream file(filename);
     std::string line;
 
-    while (std::getline(file, line)){
+    while (std::getline(file, line))
+    {
         std::istringstream iss(line);
         std::string key, value;
 

@@ -9,25 +9,40 @@
 #include "../include/GitProxy.h"
 #include "../include/NetworkUtils.h"
 #include "../include/Env.h"
+#include "../include/Settings.h"
 
 void UpdateProxy();
 
 AppConfig config;
-HWND g_hwnd;  
+HWND g_hwnd;
 EnvConfig env;
 static bool g_lastProxyState = false;
 static bool g_initialized = false;
+bool g_appEnabled = true;
+bool g_showNotifications = true;
 static std::string g_activeProfile = "";
-
 
 LRESULT CALLBACK WindowProc(HWND hwnd,
                             UINT msg,
                             WPARAM wParam,
-                            LPARAM lParam){
-    switch (msg){
+                            LPARAM lParam)
+{
+    switch (msg)
+    {
     case WM_TRAYICON:
-        if (lParam == WM_RBUTTONDOWN){
+        if (lParam == WM_RBUTTONDOWN)
+        {
             HMENU menu = CreatePopupMenu();
+
+            InsertMenu(menu, -1, MF_BYPOSITION,
+                       2001,
+                       g_appEnabled ? "Disable App" : "Enable App");
+
+            InsertMenu(menu, -1, MF_BYPOSITION,
+                       2002, "Settings");
+
+            InsertMenu(menu, -1, MF_SEPARATOR, 0, NULL);
+
             InsertMenu(menu, -1, MF_BYPOSITION,
                        ID_TRAY_EXIT, "Exit");
 
@@ -45,8 +60,23 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
         break;
 
     case WM_COMMAND:
-        if (LOWORD(wParam) == ID_TRAY_EXIT){
+
+        switch (LOWORD(wParam))
+        {
+        case 2001: // Enable/Disable App
+            g_appEnabled = !g_appEnabled;
+
+            ShowNotification("Auto Proxy",
+                             g_appEnabled ? "App Enabled" : "App Disabled");
+            break;
+
+        case 2002: // Open Settings
+            CreateSettingsWindow();
+            break;
+
+        case ID_TRAY_EXIT:
             DestroyWindow(hwnd);
+            break;
         }
         break;
 
@@ -59,26 +89,29 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-
-DWORD WINAPI WorkerThread(LPVOID){
+DWORD WINAPI WorkerThread(LPVOID)
+{
     MonitorNetwork(UpdateProxy);
     return 0;
 }
 
-
 void UpdateProxy()
 {
+
+    if (!g_appEnabled)
+        return;
+
     std::string ip = GetLocalIPv4();
 
     if (ip.empty())
         return;
 
-    for (const auto& profile : config.profiles)
+    for (const auto &profile : config.profiles)
     {
         if (IsInSubnet(ip, profile.subnet))
         {
             if (g_activeProfile == profile.name)
-                return;   // Already active
+                return; // Already active
 
             g_activeProfile = profile.name;
 
@@ -88,7 +121,7 @@ void UpdateProxy()
                 SetProxy(false, "");
 
             if (profile.enableGit)
-                SetGitProxy(true, profile.proxy,env.gitUser,env.gitPass);
+                SetGitProxy(true, profile.proxy, env.gitUser, env.gitPass);
             else
                 SetGitProxy(false, "", "", "");
 

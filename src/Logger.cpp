@@ -6,12 +6,14 @@ static bool g_enabled = false;
 static std::string g_logFile;
 
 void InitLogger(bool enabled,
-                const std::string& file){
+                const std::string &file)
+{
     g_enabled = enabled;
     g_logFile = file;
 }
 
-void Log(const std::string& message){
+void Log(const std::string &message)
+{
     if (!g_enabled)
         return;
 
