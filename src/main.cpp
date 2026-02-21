@@ -17,6 +17,7 @@ HWND g_hwnd;
 EnvConfig env;
 static bool g_lastProxyState = false;
 static bool g_initialized = false;
+static std::string g_activeProfile = "";
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd,
@@ -64,32 +65,50 @@ DWORD WINAPI WorkerThread(LPVOID){
     return 0;
 }
 
-void UpdateProxy(){
+
+void UpdateProxy()
+{
     std::string ip = GetLocalIPv4();
 
-    bool inside = false;
+    if (ip.empty())
+        return;
 
-    if (!ip.empty()){
-        inside = IsInSubnet(ip, config.subnet);
+    for (const auto& profile : config.profiles)
+    {
+        if (IsInSubnet(ip, profile.subnet))
+        {
+            if (g_activeProfile == profile.name)
+                return;   // Already active
+
+            g_activeProfile = profile.name;
+
+            if (!profile.proxy.empty())
+                SetProxy(true, profile.proxy);
+            else
+                SetProxy(false, "");
+
+            if (profile.enableGit)
+                SetGitProxy(true, profile.proxy,env.gitUser,env.gitPass);
+            else
+                SetGitProxy(false, "", "", "");
+
+            ShowNotification("Auto Proxy",
+                             ("Profile: " + profile.name).c_str());
+
+            return;
+        }
     }
 
-    if (g_initialized && inside == g_lastProxyState){
-        return;   
+    // If no profile matched
+    if (!g_activeProfile.empty())
+    {
+        g_activeProfile = "";
+        SetProxy(false, "");
+        SetGitProxy(false, "", "", "");
+        ShowNotification("Auto Proxy",
+                         "No profile matched");
     }
-
-    g_initialized = true;
-    g_lastProxyState = inside;
-
-    SetProxy(inside, config.proxy);
-
-    if (config.enableGit)
-        SetGitProxy(inside, config.proxy,env.gitUser,env.gitPass);
-
-    ShowNotification("Auto Proxy",
-                     inside ? "Proxy Enabled"
-                            : "Proxy Disabled");
 }
-
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE,
                    LPSTR,
